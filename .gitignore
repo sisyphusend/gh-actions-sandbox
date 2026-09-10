@@ -1,0 +1,12 @@
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Local-only files (per-stage notes / scratch)
+# 99-snippets/ 里的脚本是给别人看的，保留
