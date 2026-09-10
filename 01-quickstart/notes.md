@@ -6,7 +6,32 @@
 
 ## 2. 关键 YAML 片段
 
-完整内容见 [`hello.yml`](./hello.yml)。下面是核心结构 + 每个字段的 1 行解释：
+> ⚠️ **路径约定**：GitHub Actions **只识别**仓库根 `.github/workflows/*.yml`（可下分子目录）。
+> 真实运行的是 [`.github/workflows/01-quickstart/hello.yml`](../../.github/workflows/01-quickstart/hello.yml)。
+> 本笔记里的 YAML 片段只是展示 + 字段解释，**内容应与 `.github/workflows/` 下文件保持同步**。
+
+完整 YAML（真实文件内容）：
+
+```yaml
+name: L1 Quick Start
+run-name: ${{ github.actor }} 在学习 L1 🚀
+
+on: [push]
+
+jobs:
+  explore:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "🎉 触发事件是 ${{ github.event_name }}"
+      - run: echo "🐧 runner 操作系统是 ${{ runner.os }}"
+      - run: echo "🔎 当前分支 ${{ github.ref }}"
+      - name: 检出代码
+        uses: actions/checkout@v4
+      - run: ls ${{ github.workspace }}
+      - run: echo "🍏 本 job 状态：${{ job.status }}"
+```
+
+下面是核心结构 + 每个字段的 1 行解释：
 
 ```yaml
 name: L1 Quick Start                # workflow 的名字（仓库 Actions 列表显示）
@@ -59,7 +84,7 @@ git commit -m "L1: first workflow + L0 notes"
 git branch -M main
 git remote add origin https://github.com/sisyphusend/gh-actions-sandbox.git
 git push -u origin main
-```
+# ⚠️ 注意：必须把 hello.yml 放在 .github/workflows/ 下，GitHub 才认！
 
 ### 步骤 3：等 GitHub Actions 页面跑通
 - 访问 https://github.com/sisyphusend/gh-actions-sandbox/actions
@@ -68,7 +93,24 @@ git push -u origin main
 
 ## 4. 踩坑记录
 
-（push 后回来填）
+### 踩坑 1：workflow 路径必须在 `.github/workflows/`
+
+**症状**：第一次 push 后 `gh run list` / REST API 都返回 `total_count: 0`，GitHub 完全没识别 workflow。
+
+**原因**：我把 `hello.yml` 放在了 `01-quickstart/hello.yml`。GitHub Actions **只在仓库根的 `.github/workflows/` 目录下查找** workflow 文件（可以下分子目录）。
+
+**修复**：把 `hello.yml` 移到 `.github/workflows/01-quickstart/hello.yml`（按阶段分子目录，便于多阶段共存）。
+
+**教训**：
+- 所有真实运行的 workflow 都放在 `.github/workflows/` 下，按阶段分子目录（`.github/workflows/01-quickstart/`、`.github/workflows/02-events/` ...）。
+- `01-quickstart/`、`02-events/` 等目录里只放 notes.md（笔记），YAML 内容以 notes.md 中的 inline 片段为准，与 `.github/workflows/` 下的真实文件保持同步。
+- 后续每个阶段都会沿用这个布局约定。
+
+### 后续踩坑（跑通后填）
+
+- Actions 运行 URL：
+- run-name 实际显示：
+- 6 个 echo 输出截图：
 
 ## 5. 官方链接
 
