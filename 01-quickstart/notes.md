@@ -148,12 +148,12 @@ error: failed to push some refs to 'https://github.com/sisyphusend/gh-actions-sa
 2022 年起，GitHub 强制要求 push workflow 文件时 OAuth/PAT 必须有 `workflow` scope（防止恶意 workflow 被注入用户仓库）。
 当前 `gh auth status` 显示 token scopes 只有 `gist, read:org, repo`，没有 `workflow`，所以 push 被 remote 拒绝。
 
-**修复**（待执行）：
+**修复**：
 重新登录加上 workflow scope：
 ```bash
 gh auth login --scopes "gist,read:org,repo,workflow"
-# 或交互式：
-gh auth login  # 然后在提示中勾选 workflow
+# 或在已登录状态下追加：
+gh auth refresh --scopes workflow
 ```
 
 或者到 GitHub 网页 Settings → Developer settings → Personal access tokens（classic 或 fine-grained）手动创建一个含 workflow 权限的 token。
@@ -161,6 +161,40 @@ gh auth login  # 然后在提示中勾选 workflow
 **教训**：
 - 任何要 push workflow 文件到 GitHub 的账号，必须有 `workflow` scope（或 fine-grained PAT 的 Actions: Read and write 权限）。
 - `gh auth login` 默认 scope 不包含 workflow（出于最小权限原则），第一次 push workflow 时会被打回。
+
+### 踩坑 3：账号因 billing issue 被锁定 → Actions 全部 3 秒内失败（**根本原因**）
+
+**症状**：
+- run#1, run#2, run#3 都是 `conclusion: failure`，**3 秒内完成**，`runner_id: 0`，`steps: []`，logs zip 是空的（22 bytes）。
+- 完全没法分配到 GitHub-hosted runner。
+- 极简版 workflow（去掉 emoji / 中文 / checkout）同样失败。
+
+**根因（用户查网页发现）**：
+GitHub Actions 页面里 run 详情明确提示：
+> "**The job was not started because your account is locked due to a billing issue.**"
+
+意思是当前 `sisyphusend` 账号**因为 billing 问题被 GitHub 锁定**，所以任何 GitHub Actions workflow 都无法启动 runner。
+
+**可能的 billing 锁定原因**（具体需要用户去 https://github.com/settings/billing 查看）：
+- 之前有过逾期未付账单
+- 添加的支付方式验证失败（如信用卡过期 / 拒付）
+- 账号曾被 chargeback 或可疑支付
+- 风控误判（少数情况）
+
+**修复路径（用户操作）**：
+1. 打开 https://github.com/settings/billing
+2. 查看「Payment information」+「Billing issues / Alerts」区域是否有红/黄提示
+3. 按提示更新支付方式 / 处理逾期账单 / 联系 GitHub Support
+4. 解锁后 push 一个空 commit 测试：
+   ```bash
+   git commit --allow-empty -m "test: billing unlocked?" && git push origin main
+   ```
+5. 5 分钟内看 Actions 页面是否跑出绿色运行记录
+
+**教训（永生不忘）**：
+- **看到 GitHub Actions run 3 秒内失败 + runner_id=0 + 无 logs** → 第一时间怀疑账号层面问题（billing / plan / 风控），不要在 workflow 内容上死磕。
+- 这类问题有非常明确的官方提示文案，但 **CLI / API 里不会直接暴露**（billing 锁定对 API 是透明的，只能跑出"junk run"），需要去网页 UI 看 Annotations 区域才能看到。
+- 排查优先级：网页 Annotations → 账号 Settings → Billing → repo Settings → Actions → workflow 内容。我之前反了，所以绕了一大圈。
 
 ## 5. 官方链接
 

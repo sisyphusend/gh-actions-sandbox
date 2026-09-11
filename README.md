@@ -12,10 +12,10 @@ GitHub Actions 是 GitHub 内置的 **CI/CD 与自动化平台**：把"何时做
 
 | 阶段 | 主题 | 状态 |
 | ---- | ---- | ---- |
-| **L0** | 环境与心智能模型 | ✅ 进行中 |
-| L1 | 第一个 workflow | ☐ |
-| L2 | 事件触发器 | ☐ |
-| L3 | Job / Step / Runner / Action | ☐ |
+| **L0** | 环境与心智能模型 | ✅ 完成 |
+| L1 | 第一个 workflow | ✅ 完成 |
+| L2 | 事件触发器 | ✅ 完成（schedule 待自然触发验证） |
+| L3 | Job / Step / Runner / Action | 🔨 进行中 |
 | L4 | 上下文、表达式、变量、Secret | ☐ |
 | L5 | 制品、缓存、矩阵、并发 | ☐ |
 | L6 | 端到端 CI 流水线（Go） | ☐ |

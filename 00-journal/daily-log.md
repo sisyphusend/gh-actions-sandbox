@@ -17,6 +17,7 @@
 | 5 | `GITHUB_TOKEN` 给了多余权限 | 显式声明 `permissions: contents: read` 等最小权限 | — |
 | 6 | commit message 写敏感信息 | Actions 日志长期保留，注意 | — |
 | 7 | Runner 上跑不可信仓库代码 | 容易失陷，自托管 Runner 特别注意 | — |
+| 8 | run 3 秒失败 + runner_id=0 + 无 logs 时死磕 workflow 内容 | 第一时间去网页 UI 看 Annotations（CLI/API 不会暴露 billing 锁定提示）；通常是账号层 billing / plan / 风控问题 | L1 |
 
 ---
 

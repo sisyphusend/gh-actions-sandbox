@@ -1,0 +1,36 @@
+name: L3 Step Controls
+run-name: ${{ github.actor }} L3 (step 控制)
+
+# 核心演示：step 级的控制手段——超时、失败不中断、失败后的收尾。
+# 重点体会：默认任何一个 step 失败，整个 job 立刻失败，后面的 step 全部跳过。
+
+on: [push, workflow_dispatch]
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5   # job 级保险丝：防止卡死烧分钟数（公共仓库无限时，私有仓库烧钱）
+
+    steps:
+      - name: 会失败的 step
+        continue-on-error: true   # 失败了也继续，job 不红
+        run: |
+          echo "我故意失败"
+          exit 1
+
+      - name: 上一个失败但照样执行
+        run: echo "能看到我，说明 continue-on-error 生效"
+
+      - name: 捕获上一步的失败状态
+        if: failure()             # 在"有 step 失败"或"上游失败"时才执行
+        run: echo "failure() 捕获到了，做告警/清理"
+
+      - name: 正常收尾
+        run: echo "job 正常结束（颜色是绿色）"
+
+      # 对比实验：把上面 continue-on-error 那行删掉推一次，
+      # 会发现本 job 后面所有 step（包括 failure() 的）都不跑了——
+      # 想要"无论如何都收尾"，要用 always()：
+      - name: 模拟 always 清理
+        if: always()
+        run: echo "不管成败我都执行（适合发通知、清理临时文件）"
