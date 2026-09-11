@@ -1,0 +1,10 @@
+name: L1 Quick Start (flat)
+run-name: ${{ github.actor }} flat test
+
+on: [push]
+
+jobs:
+  explore:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "hi from flat workflow"
