@@ -1,7 +1,7 @@
 name: L1 Quick Start
 run-name: ${{ github.actor }} L1
 
-on: [push]
+on: [push, workflow_dispatch]
 
 jobs:
   explore:
