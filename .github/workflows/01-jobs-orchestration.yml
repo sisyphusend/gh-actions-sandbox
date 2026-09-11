@@ -23,8 +23,8 @@ jobs:
     needs: [lint, test]
     runs-on: ubuntu-latest
     outputs:
-      # 用 step 的 output 给下游 job 传值（只能传字符串）
-      version: ${{ jobs.build.steps.meta.outputs.version }}
+      # 注意：这里用 steps 上下文（jobs.<自己> 不可用，会造成自引用校验失败）
+      version: ${{ steps.meta.outputs.version }}
     steps:
       - id: meta
         run: echo "version=1.3.$GITHUB_RUN_NUMBER" >> "$GITHUB_OUTPUT"
