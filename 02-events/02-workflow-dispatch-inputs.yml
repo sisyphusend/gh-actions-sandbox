@@ -1,0 +1,26 @@
+name: L2 Dispatch with Inputs
+run-name: 手动触发（env=${{ inputs.env }}）
+
+# workflow_dispatch 独有玩法：手动触发时传参数。
+# 浏览器：Run workflow 按钮会出现表单；CLI：gh workflow run <file> -f env=prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: 部署环境
+        type: choice
+        options: [dev, staging, prod]
+        default: dev
+      dry_run:
+        description: 只打印不执行？
+        type: boolean
+        default: true
+
+jobs:
+  deploy-sim:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "目标环境 = ${{ inputs.env }}，dry_run = ${{ inputs.dry_run }}"
+      - run: echo "prod 环境的额外检查…"
+        if: inputs.env == 'prod'

@@ -1,0 +1,48 @@
+name: L2 Events Overview
+run-name: ${{ github.actor }} L2 (${{ github.event_name }})
+
+# 一次练齐 5 种最常用触发器。
+# 每种触发后到 Actions 日志里对比 github.event_name / github.ref / github.actor 的差异。
+
+on:
+  # 1) push：仅 main 分支；忽略 tags
+  push:
+    branches: [main]
+    tags-ignore: ['**']
+
+  # 2) pull_request：只关心开 PR 和新增提交两种动作
+  pull_request:
+    types: [opened, synchronize]
+
+  # 3) workflow_dispatch：浏览器 / gh CLI 手动触发（可传 input，见 02-inputs 示例）
+  workflow_dispatch:
+
+  # 4) schedule：cron 是 UTC 时间！'17 3 * * *' = UTC 3:17 ≈ 北京时间 11:17
+  #    坑：只在默认分支生效；实际触发会延迟几分钟到几十分钟；公共仓库长期不活跃会被停用
+  schedule:
+    - cron: '17 3 * * *'
+
+  # 5) release：发布 release 时触发
+  release:
+    types: [published]
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 打印本次触发的关键上下文
+        run: |
+          echo "event_name = ${{ github.event_name }}"
+          echo "ref        = ${{ github.ref }}"
+          echo "ref_name   = ${{ github.ref_name }}"
+          echo "actor      = ${{ github.actor }}"
+          echo "sha        = ${{ github.sha }}"
+          echo "run_id     = ${{ github.run_id }}"
+
+      - name: schedule 触发时 actor 是谁？
+        if: github.event_name == 'schedule'
+        run: echo "定时任务由 ${{ github.actor }} 触发，通常是 github-actions[bot]"
+
+      - name: PR 触发时看合并引用
+        if: github.event_name == 'pull_request'
+        run: echo "PR 触发的 ref 是合并引用 refs/pull/N/merge，不是你的分支名"
