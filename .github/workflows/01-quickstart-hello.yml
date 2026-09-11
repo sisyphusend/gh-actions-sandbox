@@ -1,5 +1,5 @@
-name: L1 Quick Start (flat)
-run-name: ${{ github.actor }} flat test
+name: L1 Quick Start
+run-name: ${{ github.actor }} 在学习 L1 🚀
 
 on: [push]
 
@@ -7,4 +7,10 @@ jobs:
   explore:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "hi from flat workflow"
+      - run: echo "🎉 触发事件是 ${{ github.event_name }}"
+      - run: echo "🐧 runner 操作系统是 ${{ runner.os }}"
+      - run: echo "🔎 当前分支 ${{ github.ref }}"
+      - name: 检出代码
+        uses: actions/checkout@v4
+      - run: ls ${{ github.workspace }}
+      - run: echo "🍏 本 job 状态：${{ job.status }}"

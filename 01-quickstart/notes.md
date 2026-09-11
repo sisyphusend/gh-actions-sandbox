@@ -6,8 +6,9 @@
 
 ## 2. 关键 YAML 片段
 
-> ⚠️ **路径约定**：GitHub Actions **只识别**仓库根 `.github/workflows/*.yml`（可下分子目录）。
-> 真实运行的是 [`.github/workflows/01-quickstart/hello.yml`](../../.github/workflows/01-quickstart/hello.yml)。
+> ⚠️ **路径约定**：GitHub Actions **只识别**仓库根 `.github/workflows/*.yml`。
+> **实测：`.github/workflows/<subdir>/<file>.yml` 子目录布局在这个 GitHub 环境下不会被识别**（`actions/workflows` API 返回 `total_count: 0`）。
+> 真实运行的是 [`.github/workflows/01-quickstart-hello.yml`](../../.github/workflows/01-quickstart-hello.yml)（**文件名前缀**分组，不用子目录）。
 > 本笔记里的 YAML 片段只是展示 + 字段解释，**内容应与 `.github/workflows/` 下文件保持同步**。
 
 完整 YAML（真实文件内容）：
@@ -97,20 +98,69 @@ git push -u origin main
 
 **症状**：第一次 push 后 `gh run list` / REST API 都返回 `total_count: 0`，GitHub 完全没识别 workflow。
 
-**原因**：我把 `hello.yml` 放在了 `01-quickstart/hello.yml`。GitHub Actions **只在仓库根的 `.github/workflows/` 目录下查找** workflow 文件（可以下分子目录）。
+**原因**：我把 `hello.yml` 放在了 `01-quickstart/hello.yml`。GitHub Actions **只在仓库根的 `.github/workflows/` 目录下查找** workflow 文件。
 
-**修复**：把 `hello.yml` 移到 `.github/workflows/01-quickstart/hello.yml`（按阶段分子目录，便于多阶段共存）。
+**修复**：把 `hello.yml` 移到 `.github/workflows/` 下。
 
 **教训**：
-- 所有真实运行的 workflow 都放在 `.github/workflows/` 下，按阶段分子目录（`.github/workflows/01-quickstart/`、`.github/workflows/02-events/` ...）。
+- 所有真实运行的 workflow 都放在 `.github/workflows/` 下。
 - `01-quickstart/`、`02-events/` 等目录里只放 notes.md（笔记），YAML 内容以 notes.md 中的 inline 片段为准，与 `.github/workflows/` 下的真实文件保持同步。
-- 后续每个阶段都会沿用这个布局约定。
+
+### 踩坑 1b：`.github/workflows/<subdir>/` 子目录**不被识别**
+
+**症状**：移到 `.github/workflows/01-quickstart/hello.yml`（带子目录）后，`actions/workflows` API 仍然返回 `total_count: 0`。但同一个 commit 加一个不带子目录的 `.github/workflows/01-quickstart-hello.yml`（文件名带前缀）立刻被识别为 `total_count: 1`。
+
+**原因**：实测 GitHub Actions 在这个环境下**不递归扫描 `.github/workflows/` 的子目录**（与某些第三方文档说的"支持子目录"不一致；可能是 GHES/特定 plan 才支持，或 indexing 行为有变化）。**对个人 repo 而言，最稳妥的布局是「文件名前缀分组」**。
+
+**修复**：
+- 删掉 `.github/workflows/01-quickstart/` 子目录
+- 把 hello.yml 写进 `.github/workflows/01-quickstart-hello.yml`（扁平文件名前缀）
+- 后续所有阶段沿用 `.github/workflows/<stage>-<name>.yml` 命名
+
+**最终布局约定**：
+```
+.github/workflows/
+├── 01-quickstart-hello.yml          # L1
+├── 02-events-on-push.yml            # L2
+├── 02-events-on-pr.yml              # L2
+├── 02-events-manual-dispatch.yml    # L2
+├── 02-events-nightly.yml            # L2
+├── 02-events-on-issue.yml           # L2
+├── 03-jobs-and-steps-multi-job.yml  # L3
+└── ...
+```
 
 ### 后续踩坑（跑通后填）
 
 - Actions 运行 URL：
 - run-name 实际显示：
 - 6 个 echo 输出截图：
+
+### 踩坑 2：gh token 没有 `workflow` scope 导致 push 被拒
+
+**症状**：
+```
+! [remote rejected] main -> main (refusing to allow an OAuth App to create or update workflow `.github/workflows/01-quickstart/hello.yml` without `workflow` scope)
+error: failed to push some refs to 'https://github.com/sisyphusend/gh-actions-sandbox.git'
+```
+
+**原因**：
+2022 年起，GitHub 强制要求 push workflow 文件时 OAuth/PAT 必须有 `workflow` scope（防止恶意 workflow 被注入用户仓库）。
+当前 `gh auth status` 显示 token scopes 只有 `gist, read:org, repo`，没有 `workflow`，所以 push 被 remote 拒绝。
+
+**修复**（待执行）：
+重新登录加上 workflow scope：
+```bash
+gh auth login --scopes "gist,read:org,repo,workflow"
+# 或交互式：
+gh auth login  # 然后在提示中勾选 workflow
+```
+
+或者到 GitHub 网页 Settings → Developer settings → Personal access tokens（classic 或 fine-grained）手动创建一个含 workflow 权限的 token。
+
+**教训**：
+- 任何要 push workflow 文件到 GitHub 的账号，必须有 `workflow` scope（或 fine-grained PAT 的 Actions: Read and write 权限）。
+- `gh auth login` 默认 scope 不包含 workflow（出于最小权限原则），第一次 push workflow 时会被打回。
 
 ## 5. 官方链接
 
