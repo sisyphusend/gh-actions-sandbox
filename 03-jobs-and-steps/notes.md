@@ -33,6 +33,7 @@
 
 ## 踩坑记录
 
+- **（2026-09-11 实战踩中）job 的 outputs 里误用 `jobs` 上下文自引用**：写成 `version: ${{ jobs.build.steps.meta.outputs.version }}` → push 后 run 0 秒失败，workflow 名直接变成文件路径、没有任何日志和 annotation。正确写法是用 `steps` 上下文：`${{ steps.meta.outputs.version }}`。**识别技巧：run name 显示为路径 + 0s = workflow 级校验失败，区别于"job 没启动"（账号问题）和"step 失败"（执行问题），这是失败排查 SOP 的第三类。**
 - **outputs 只能传字符串**：想传结构化数据，`echo "json=$(... | jq -c .)" >> "$GITHUB_OUTPUT"`，下游 `fromJSON()` 解。
 - **GITHUB_OUTPUT vs GITHUB_ENV**：前者是 step/job 作用域（本 job 的后续 step + 下游 job），后者是环境变量作用域（本 job 后续 step）。混用是新手最常见的"变量读不到"原因，L4 展开讲 env 与 context 的区别。
 - **skipped ≠ failed**：`needs` 的上游被 if 跳过时下游也会跳；想让"上游跳过也照跑"，给下游写 `if: always()` 或 `if: needs.x.result == 'skipped'`（注意这时 result 检查比 always 更精确）。
